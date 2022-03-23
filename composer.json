@@ -1,24 +1,10 @@
 {
-  "name": "drupal/drupal-extension",
+  "name": "docomoinnovations/drupal-extension",
   "type": "behat-extension",
   "description": "Drupal extension for Behat",
   "keywords": ["drupal", "web", "test"],
   "homepage": "http://drupal.org/project/drupalextension",
   "license": "GPL-2.0-or-later",
-  "authors": [
-    {
-      "name": "Jonathan Hedstrom",
-      "email": "jhedstrom@gmail.com"
-    },
-    {
-      "name": "Melissa Anderson",
-      "homepage": "https://github.com/eliza411"
-    },
-    {
-      "name": "Pieter Frenssen",
-      "homepage": "https://github.com/pfrenssen"
-    }
-  ],
   "prefer-stable": true,
   "require": {
     "behat/behat": "~3.2",
@@ -72,5 +58,5 @@
         "web-root": "drupal/"
       }
     }
-}
+  }
 }
