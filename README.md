@@ -1,4 +1,4 @@
-# Behat Drupal Extension
+# Behat Drupal Extension 2
 
 The Drupal Extension is an integration layer between [Behat](http://behat.org),
 [Mink Extension](https://github.com/Behat/MinkExtension), and Drupal. It
