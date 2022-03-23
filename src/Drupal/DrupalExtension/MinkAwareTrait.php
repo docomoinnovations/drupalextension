@@ -169,4 +169,26 @@ trait MinkAwareTrait
         $filepath = $filepath ? $filepath : (ini_get('upload_tmp_dir') ? ini_get('upload_tmp_dir') : sys_get_temp_dir());
         file_put_contents($filepath . '/' . $filename, $this->getSession()->getScreenshot());
     }
+
+  /**
+   * Return a region from the current page.
+   *
+   * @throws \Exception
+   *   If region cannot be found.
+   *
+   * @param string $region
+   *   The machine name of the region to return.
+   *
+   * @return \Behat\Mink\Element\NodeElement
+   */
+  public function getRegion($region)
+  {
+    $session = $this->getSession();
+    $regionObj = $session->getPage()->find('region', $region);
+    if (!$regionObj) {
+      throw new \Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
+    }
+    return $regionObj;
+  }
+
 }
