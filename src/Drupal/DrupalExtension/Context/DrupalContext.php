@@ -6,12 +6,15 @@ use Behat\Behat\Context\TranslatableContext;
 use Behat\Mink\Element\Element;
 
 use Behat\Gherkin\Node\TableNode;
+use Drupal\DrupalExtension\MinkAwareTrait;
 
 /**
  * Provides pre-built step definitions for interacting with Drupal.
  */
 class DrupalContext extends RawDrupalContext implements TranslatableContext
 {
+
+  use MinkAwareTrait;
 
   /**
    * Returns list of definition translation resources paths.
@@ -471,4 +474,71 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
         } while (true);
         fwrite(STDOUT, "\033[u");
     }
+
+  /**
+   * Find text in a table row containing given text.
+   *
+   * @Then I should see (the text ):text1 or :text2 in the :rowText row
+   */
+  public function assertTextOrInTableRow($text1, $text2, $rowText): void {
+    $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
+    if (strpos($row->getText(), $text1) === FALSE && strpos($row->getText(), $text2) === FALSE) {
+      throw new \RuntimeException(sprintf('Found a row containing "%s", but it contained neither the text "%s" nor "%s".', $rowText, $text1, $text2));
+    }
+  }
+
+  /**
+   * Check a box in a table row containing given text.
+   *
+   * @When I check the box in the :rowText row
+   */
+  public function checkBoxInTableRow($rowText): void {
+    $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
+    $input = $row->find('css', 'input');
+    $input->check();
+  }
+
+  /**
+   * Fill in a form field w/ id|name|title|alt|value in the specified table row.
+   *
+   * @When I fill in :value for :field in the row :row in the :region( region)
+   */
+  public function fillFieldInTableRowInRegion($value, $field, $row, $region): void {
+    $regionObj = $this->getRegion($region);
+    $tableRowSelector = sprintf('.row-%d', intval($row));
+    $rowObj = $regionObj->find('css', $tableRowSelector);
+    $rowObj->fillField($field, $value);
+  }
+
+  /**
+   * Follows link in a table row with given value set in specified field.
+   *
+   * @When I follow/click :link in a row with :value set in :field in the :region( region)
+   */
+  public function followLinkInTableRowWithValueInRegion($link, $value, $field, $region): void {
+    $regionObj = $this->getRegion($region);
+    $rows = $regionObj->findAll('css', 'table > tbody > tr');
+    foreach ($rows as $row) {
+      $fieldObj = $row->findField($field);
+      if (strpos($fieldObj->getValue(), $value) === FALSE) {
+        continue;
+      }
+      $row->clickLink($link);
+      return;
+    }
+  }
+
+  /**
+   * Find text in a table row containing given text in specified region.
+   *
+   * @Then I should see (the text ):text in the :rowText row in the :region( region)
+   */
+  public function assertTextInTableRowInRegion($text, $rowText, $region): void {
+    $regionObj = $this->getRegion($region);
+    $row = $this->getTableRow($regionObj, $rowText);
+    if (strpos($row->getText(), $text) === FALSE) {
+      throw new \Exception(sprintf("The text '%s' was not found in the row with '%s' in the region '%s' on the page %s", $text, $rowText, $region, $this->getSession()->getCurrentUrl()));
+    }
+  }
+
 }
