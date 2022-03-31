@@ -379,7 +379,7 @@ class MessageContext extends RawDrupalContext implements TranslatableContext
         $selector_id = 'warning_message_selector';
         break;
       default:
-        throw new ExpectationException(sprintf("Message type is invalid: %s", $selector),$this->getSession()->getDriver());
+        throw new ExpectationException(sprintf("Message type is invalid: %s", $selector), $this->getSession()->getDriver());
     }
     $this->assertNotVisible($selector_id);
   }
