@@ -367,15 +367,19 @@ class MessageContext extends RawDrupalContext implements TranslatableContext
    *
    * @Then /^I should see no (?P<selector>(?:success|error|warning)) message$/
    */
-  public function assertSelectorNotVisible($selector):void {
-    if ($selector == 'success') {
-      $selector_id = 'success_message_selector';
-    }
-    else if (selector == 'error') {
-      $selector_id = 'error_message_selector';
-    }
-    else {
-      $selector_id = 'warning_message_selector';
+  public function assertSelectorNotVisible($selector): void {
+    switch ($selector) {
+      case 'success':
+        $selector_id = 'success_message_selector';
+        break;
+      case 'error':
+        $selector_id = 'error_message_selector';
+        break;
+      case 'warning':
+        $selector_id = 'warning_message_selector';
+        break;
+      default:
+        throw new ExpectationException(sprintf("Message type is invalid: %s", $selector),$this->getSession()->getDriver());
     }
     $this->assertNotVisible($selector_id);
   }
@@ -385,7 +389,7 @@ class MessageContext extends RawDrupalContext implements TranslatableContext
    *
    * @Then I should see neither error nor warning messages
    */
-  public function assertErrorWarningNotVisible():void {
+  public function assertErrorWarningNotVisible(): void {
     $this->assertNotVisible('error_message_selector');
     $this->assertNotVisible('warning_message_selector');
   }
@@ -399,17 +403,22 @@ class MessageContext extends RawDrupalContext implements TranslatableContext
    * @throws \Behat\Mink\Exception\ExpectationException
    *   Thrown when the unexpected message is present in the page.
    */
-  private function assertNotVisible(string $selector_id):void {
+  private function assertNotVisible(string $selector_id): void {
     $selector = $this->getDrupalSelector($selector_id);
     $exception_msg = "The page '%s' contains the $selector_id '%s': %s";
     $selector_objects = $this->getSession()->getPage()->findAll("css", $selector);
-    $visible_messages = [];
-    if (!empty($selector_objects)) {
-      foreach ($selector_objects as $selector_object) {
-        $visible_messages += $selector_object->getText();
-      }
-      throw new ExpectationException(sprintf($exception_msg, $this->getSession()->getCurrentUrl(), $selector_id, $visible_messages), $this->getSession()->getDriver());
+    if (empty($selector_objects)) {
+      return;
     }
+
+    $visible_messages = [];
+    foreach ($selector_objects as $selector_object) {
+      if (empty($selector_objects)) {
+        continue;
+      }
+      $visible_messages += $selector_object->getText();
+    }
+    throw new ExpectationException(sprintf($exception_msg, $this->getSession()->getCurrentUrl(), $selector_id, $visible_messages), $this->getSession()->getDriver());
   }
 
 }
