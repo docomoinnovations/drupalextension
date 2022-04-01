@@ -199,6 +199,13 @@ class DrupalExtension implements ExtensionInterface
             end()->
           end()->
         end()->
+        // Screenshot path.
+        arrayNode('screenshot')->
+          children()->
+            scalarNode('path')->defaultValue('/tmp/screenshots')->end()->
+            scalarNode('failure_suffix')->defaultValue('F')->end()->
+          end()->
+        end()->
         end()->
         end();
     }

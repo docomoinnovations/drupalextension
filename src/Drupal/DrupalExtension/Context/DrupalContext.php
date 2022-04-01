@@ -3,9 +3,11 @@
 namespace Drupal\DrupalExtension\Context;
 
 use Behat\Behat\Context\TranslatableContext;
+use Behat\Behat\Hook\Scope\AfterStepScope;
+use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Element\Element;
 
-use Behat\Gherkin\Node\TableNode;
+use Drupal\DrupalExtension\FeatureTrait;
 use Drupal\DrupalExtension\MinkAwareTrait;
 
 /**
@@ -14,7 +16,7 @@ use Drupal\DrupalExtension\MinkAwareTrait;
 class DrupalContext extends RawDrupalContext implements TranslatableContext
 {
 
-  use MinkAwareTrait;
+  use FeatureTrait, MinkAwareTrait;
 
   /**
    * Returns list of definition translation resources paths.
@@ -539,6 +541,58 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     if (strpos($row->getText(), $text) === FALSE) {
       throw new \Exception(sprintf("The text '%s' was not found in the row with '%s' in the region '%s' on the page %s", $text, $rowText, $region, $this->getSession()->getCurrentUrl()));
     }
+  }
+
+  /**
+   * Take a screenshot.
+   *
+   * @Then I take screenshot
+   */
+  public function iTakeScreenshot(): void {
+    $this->saveScreenshot($this->getOutputFilename(), $this->getScreenshotParameter('path'));
+  }
+
+  /**
+   * Take a screenshot on failure.
+   *
+   * @AfterStep
+   */
+  public function takeScreenshotOnFailure(AfterStepScope $scope): void {
+    if (!$scope->getTestResult()->isPassed()) {
+      $this->saveScreenshot($this->getOutputFilename(TRUE), $this->getScreenshotParameter('path'));
+    }
+  }
+
+  /**
+   * Get an output file name
+   *
+   * @var bool onFailure
+   *   TRUE if called on failure.
+   *
+   * @return string
+   *  Filename.
+   */
+  private function getOutputFilename(bool $onFailure = FALSE): string {
+    $feature_file = $this->getFeature()->getFile();
+    list($feature_filename, $extension) = explode('.', substr($feature_file, strrpos($feature_file, '/') + 1));
+    return sprintf("%s_%s_%s%s", date('mdy-His'), $feature_filename, $this->getStep()->getLine(), $onFailure ? $this->getScreenshotParameter('failure_suffix') : '');
+  }
+
+  /**
+   * Get a screenshot parameter.
+   *
+   * @var name
+   *  Sub parameter name.
+   *
+   * @return string|null
+   *  Path.
+   */
+  private function getScreenshotParameter(string $name): ?string {
+    $parameters = $this->getDrupalParameter('screenshot');
+    if (empty($parameters)) {
+      return NULL;
+    }
+    return $parameters[$name] ?? NULL;
   }
 
 }
