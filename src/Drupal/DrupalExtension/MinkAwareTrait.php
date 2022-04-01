@@ -173,16 +173,15 @@ trait MinkAwareTrait
   /**
    * Return a region from the current page.
    *
-   * @throws \Exception
-   *   If region cannot be found.
-   *
    * @param string $region
    *   The machine name of the region to return.
    *
    * @return \Behat\Mink\Element\NodeElement
+   *
+   * @throws \Exception
+   *   If the region cannot be found.
    */
-  public function getRegion($region)
-  {
+  public function getRegion($region): \Behat\Mink\Element\NodeElement {
     $session = $this->getSession();
     $regionObj = $session->getPage()->find('region', $region);
     if (!$regionObj) {
