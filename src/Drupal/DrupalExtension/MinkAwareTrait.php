@@ -161,33 +161,49 @@ trait MinkAwareTrait
      *   Desired filepath, defaults to upload_tmp_dir, falls back to
      *   sys_get_temp_dir().
      */
-    public function saveScreenshot($filename = null, $filepath = null)
-    {
+    public function saveScreenshot($filename = null, $filepath = null) {
         // Under Cygwin, uniqid with more_entropy must be set to true.
         // No effect in other environments.
-        $filename = $filename ?: sprintf('%s_%s_%s.%s', $this->getMinkParameter('browser_name'), date('c'), uniqid('', true), 'png');
+        $filename = $filename ?: sprintf('%s_%s_%s', $this->getMinkParameter('browser_name'), date('c'), uniqid('', true));
         $filepath = $filepath ? $filepath : (ini_get('upload_tmp_dir') ? ini_get('upload_tmp_dir') : sys_get_temp_dir());
-        file_put_contents($filepath . '/' . $filename, $this->getSession()->getScreenshot());
+
+        try {
+          $data = $this->getSession()->getScreenshot();
+          $suffix = 'png';
+        } catch (\Behat\Mink\Exception\UnsupportedDriverActionException|\Behat\Mink\Exception\DriverException $e) {
+          $data = $this->getSession()->getDriver()->getContent();
+          $suffix = 'html';
+        }
+
+      if (empty($data)) {
+        return;
+      }
+
+      if (is_dir($filepath) || mkdir($filepath, 0777, true) || is_dir($filepath)) {
+        $output_file = $filepath . '/' . $filename . '.' . $suffix;
+        file_put_contents($output_file, $data);
+        echo "Screenshot at: $output_file";
+      }
     }
 
-  /**
-   * Return a region from the current page.
-   *
-   * @param string $region
-   *   The machine name of the region to return.
-   *
-   * @return \Behat\Mink\Element\NodeElement
-   *
-   * @throws \Exception
-   *   If the region cannot be found.
-   */
-  public function getRegion($region): \Behat\Mink\Element\NodeElement {
-    $session = $this->getSession();
-    $regionObj = $session->getPage()->find('region', $region);
-    if (!$regionObj) {
-      throw new \Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
+    /**
+     * Return a region from the current page.
+     *
+     * @param string $region
+     *   The machine name of the region to return.
+     *
+     * @return \Behat\Mink\Element\NodeElement
+     *
+     * @throws \Exception
+     *   If the region cannot be found.
+     */
+    public function getRegion($region): \Behat\Mink\Element\NodeElement {
+      $session = $this->getSession();
+      $regionObj = $session->getPage()->find('region', $region);
+      if (!$regionObj) {
+        throw new \Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
+      }
+      return $regionObj;
     }
-    return $regionObj;
-  }
 
 }
