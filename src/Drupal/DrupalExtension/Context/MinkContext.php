@@ -3,8 +3,11 @@
 namespace Drupal\DrupalExtension\Context;
 
 use Behat\Behat\Context\TranslatableContext;
+use Behat\Behat\Hook\Scope\AfterStepScope;
 use Behat\Mink\Exception\UnsupportedDriverActionException;
 use Behat\MinkExtension\Context\MinkContext as MinkExtension;
+use Drupal\DrupalExtension\DrupalParametersTrait;
+use Drupal\DrupalExtension\MinkAwareTrait;
 use Drupal\DrupalExtension\TagTrait;
 
 /**
@@ -13,7 +16,7 @@ use Drupal\DrupalExtension\TagTrait;
 class MinkContext extends MinkExtension implements TranslatableContext
 {
 
-    use TagTrait;
+    use TagTrait, MinkAwareTrait;
 
   /**
    * Returns list of definition translation resources paths.
@@ -611,7 +614,51 @@ JS;
         $radiobutton->selectOption($value, false);
     }
 
-  /**
-   * @} End of defgroup "mink extensions"
-   */
+    /**
+     * Take a screenshot.
+     *
+     * @Then I take screenshot
+     */
+    public function iTakeScreenshot(): void {
+      $this->saveScreenshot($this->getOutputFilename(), $this->getScreenshotPath());
+    }
+
+    /**
+     * Take a screenshot on failure.
+     *
+     * @AfterStep
+     */
+    public function takeScreenshotOnFailure(AfterStepScope $scope): void {
+      if (!$scope->getTestResult()->isPassed()) {
+        $this->saveScreenshot($this->getOutputFilename(), $this->getScreenshotPath());
+      }
+    }
+
+    /**
+     * Get an output file name
+     *
+     * @return string
+     *  Filename.
+     */
+    private function getOutputFilename(): string {
+      $feature_file = $this->getFeature()->getFile();
+      list($feature_filename, $extension) = explode('.', substr($feature_file, strrpos($feature_file, '/') + 1));
+      return sprintf("%s_%s_%s", date('mdy-His'), $feature_filename, $this->getStep()->getLine());
+    }
+
+    /**
+     * Get the screenshot path.
+     *
+     * @return string
+     *  Path.
+     */
+    private function getScreenshotPath(): string {
+      //@FIXME read the config
+      return '/tmp/behat_screenshots';
+    }
+
+    /**
+     * @} End of defgroup "mink extensions"
+     */
+
 }
