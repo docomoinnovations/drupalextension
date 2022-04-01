@@ -161,7 +161,7 @@ trait MinkAwareTrait
      *   Desired filepath, defaults to upload_tmp_dir, falls back to
      *   sys_get_temp_dir().
      */
-    public function saveScreenshot($filename = null, $filepath = null) {
+    public function saveScreenshot($filename = null, $filepath = null): void {
         // Under Cygwin, uniqid with more_entropy must be set to true.
         // No effect in other environments.
         $filename = $filename ?: sprintf('%s_%s_%s', $this->getMinkParameter('browser_name'), date('c'), uniqid('', true));

@@ -478,6 +478,15 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
+   * Wait specified milliseconds.
+   *
+   * @When I wait :msec milliseconds
+   */
+  public function waitMilliSeconds($msec): void {
+    usleep($msec * 1000);
+  }
+
+  /**
    * Find text in a table row containing given text.
    *
    * @Then I should see (the text ):text1 or :text2 in the :rowText row
