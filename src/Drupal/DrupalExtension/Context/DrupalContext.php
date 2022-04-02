@@ -6,6 +6,7 @@ use Behat\Behat\Context\TranslatableContext;
 use Behat\Behat\Hook\Scope\AfterStepScope;
 use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Element\Element;
+use Behat\Testwork\Tester\Result\TestResult;
 
 use Drupal\DrupalExtension\FeatureTrait;
 use Drupal\DrupalExtension\MinkAwareTrait;
@@ -567,7 +568,8 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    * @AfterStep
    */
   public function takeScreenshotOnFailure(AfterStepScope $scope): void {
-    if (!$scope->getTestResult()->isPassed()) {
+    // We cannot use !isPassed() as the scenario outline returns a non-PASSED code.
+    if ($scope->getTestResult()->getResultCode() === TestResult::FAILED) {
       $this->saveScreenshot($this->getOutputFilename(TRUE), $this->getScreenshotParameter('path'));
     }
   }
