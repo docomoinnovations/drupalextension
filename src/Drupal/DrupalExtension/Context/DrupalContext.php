@@ -6,6 +6,7 @@ use Behat\Behat\Context\TranslatableContext;
 use Behat\Behat\Hook\Scope\AfterStepScope;
 use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Element\Element;
+use Behat\Mink\Exception;
 use Behat\Testwork\Tester\Result\TestResult;
 
 use Drupal\DrupalExtension\FeatureTrait;
@@ -588,16 +589,22 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
     $feature_file = $this->getFeature()->getFile();
-    list($feature_filename, $extension) = explode('.', substr($feature_file, strrpos($feature_file, '/') + 1));
-    $filename = sprintf("%s_%s_%s%s", date('mdy-His'), $feature_filename, $this->getStep()->getLine(), $on_failure ? $this->getScreenshotParameter('failure_suffix') : '');
+    [$feature_filename, $extension] = explode('.',
+      substr($feature_file, strrpos($feature_file, '/') + 1));
+    $filename = sprintf('%s_%s_%s%s', date('mdy-His'),
+      $feature_filename, $this->getStep()->getLine(),
+      $on_failure
+        ? $this->getScreenshotParameter('failure_suffix')
+        : ''
+    );
 
-    $output_filepath = $filepath . "/" . $filename;
+    $output_filepath = "${filepath}/${filename}";
     try {
       $suffix = 'png';
       $this->saveScreenshot("${filename}.${suffix}", $filepath);
       echo "Screenshot at: ${output_filepath}.${suffix}";
       
-    } catch (\Behat\Mink\Exception\UnsupportedDriverActionException|\Behat\Mink\Exception\DriverException $e) {
+    } catch (UnsupportedDriverActionException|DriverException $e) {
       $data = $this->getSession()->getDriver()->getContent();
       $suffix = 'html';
       file_put_contents("${filename}.${suffix}", $data);
@@ -616,10 +623,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
   private function getScreenshotParameter(string $name): ?string {
     $parameters = $this->getDrupalParameter('screenshot');
-    if (empty($parameters)) {
-      return NULL;
-    }
-    return $parameters[$name] ?? NULL;
+    return !empty($parameters[$name]) ? $parameters[$name] : NULL;
   }
 
 }
