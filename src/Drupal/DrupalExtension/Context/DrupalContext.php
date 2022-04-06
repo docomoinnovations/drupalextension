@@ -603,11 +603,10 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
       $suffix = 'png';
       $this->saveScreenshot("${filename}.${suffix}", $filepath);
       echo "Screenshot at: ${output_filepath}.${suffix}";
-      
-    } catch (UnsupportedDriverActionException|DriverException $e) {
+    } catch (\Behat\Mink\Exception\UnsupportedDriverActionException|\Behat\Mink\Exception\DriverException $e) {
       $data = $this->getSession()->getDriver()->getContent();
       $suffix = 'html';
-      file_put_contents("${filename}.${suffix}", $data);
+      file_put_contents("${output_filepath}.${suffix}", $data);
       echo "Screenshot at: ${output_filepath}.${suffix}";
     }
   }
