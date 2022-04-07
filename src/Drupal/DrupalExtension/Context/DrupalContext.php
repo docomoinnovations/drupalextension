@@ -3,9 +3,14 @@
 namespace Drupal\DrupalExtension\Context;
 
 use Behat\Behat\Context\TranslatableContext;
-use Behat\Mink\Element\Element;
-
+use Behat\Behat\Hook\Scope\AfterStepScope;
 use Behat\Gherkin\Node\TableNode;
+use Behat\Mink\Element\Element;
+use Behat\Mink\Exception\Behat\Mink\Exception\UnsupportedDriverActionException;
+use Behat\Mink\Exception\DriverException;
+use Behat\Testwork\Tester\Result\TestResult;
+
+use Drupal\DrupalExtension\FeatureTrait;
 use Drupal\DrupalExtension\MinkAwareTrait;
 
 /**
@@ -14,7 +19,7 @@ use Drupal\DrupalExtension\MinkAwareTrait;
 class DrupalContext extends RawDrupalContext implements TranslatableContext
 {
 
-  use MinkAwareTrait;
+  use FeatureTrait, MinkAwareTrait;
 
   /**
    * Returns list of definition translation resources paths.
@@ -476,6 +481,15 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
+   * Wait specified milliseconds.
+   *
+   * @When I wait :msec milliseconds
+   */
+  public function waitMilliSeconds($msec): void {
+    usleep($msec * 1000);
+  }
+
+  /**
    * Find text in a table row containing given text.
    *
    * @Then I should see (the text ):text1 or :text2 in the :rowText row
@@ -539,6 +553,77 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     if (strpos($row->getText(), $text) === FALSE) {
       throw new \Exception(sprintf("The text '%s' was not found in the row with '%s' in the region '%s' on the page %s", $text, $rowText, $region, $this->getSession()->getCurrentUrl()));
     }
+  }
+
+  /**
+   * Take a screenshot.
+   *
+   * @Then I take screenshot
+   */
+  public function iTakeScreenshot(): void {
+    $this->takeScreenshot(FALSE);
+  }
+
+  /**
+   * Take a screenshot on failure.
+   *
+   * @AfterStep
+   */
+  public function takeScreenshotOnFailure(AfterStepScope $scope): void {
+    // We cannot use !isPassed() as the scenario outline returns a non-PASSED code.
+    if ($scope->getTestResult()->getResultCode() === TestResult::FAILED) {
+      $this->takeScreenshot(TRUE);
+    }
+  }
+
+  /**
+   * Take screenshot or content html
+   *
+   * @var bool $on_failure
+   *   TRUE if called on failure.
+   */
+  public function takeScreenshot(bool $on_failure = FALSE): void {
+
+    $filepath = $this->getScreenshotParameter('path');
+    if (empty($filepath) || (!is_dir($filepath) && !mkdir($filepath, 0777, true) && !is_dir($filepath))) {
+       $filepath = sys_get_temp_dir();
+    }
+
+    $feature_file = $this->getFeature()->getFile();
+    [$feature_filename, $extension] = explode('.',
+      substr($feature_file, strrpos($feature_file, '/') + 1));
+    $filename = sprintf('%s_%s_%s%s', date('mdy-His'),
+      $feature_filename, $this->getStep()->getLine(),
+      $on_failure
+        ? $this->getScreenshotParameter('failure_suffix')
+        : ''
+    );
+
+    $output_filepath = "${filepath}/${filename}";
+    try {
+      $suffix = 'png';
+      $this->saveScreenshot("${filename}.${suffix}", $filepath);
+      echo "Screenshot at: ${output_filepath}.${suffix}";
+    } catch (UnsupportedDriverActionException|DriverException $e) {
+      $data = $this->getSession()->getDriver()->getContent();
+      $suffix = 'html';
+      file_put_contents("${output_filepath}.${suffix}", $data);
+      echo "Screenshot at: ${output_filepath}.${suffix}";
+    }
+  }
+  
+  /**
+   * Get a screenshot parameter.
+   *
+   * @var name
+   *  Sub parameter name.
+   *
+   * @return string|null
+   *  Path.
+   */
+  private function getScreenshotParameter(string $name): ?string {
+    $parameters = $this->getDrupalParameter('screenshot');
+    return !empty($parameters[$name]) ? $parameters[$name] : NULL;
   }
 
 }
