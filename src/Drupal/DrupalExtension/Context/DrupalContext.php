@@ -6,7 +6,6 @@ use Behat\Behat\Context\TranslatableContext;
 use Behat\Behat\Hook\Scope\AfterStepScope;
 use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Element\Element;
-use Behat\Mink\Exception;
 use Behat\Testwork\Tester\Result\TestResult;
 
 use Drupal\DrupalExtension\FeatureTrait;
