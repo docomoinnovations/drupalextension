@@ -6,6 +6,8 @@ use Behat\Behat\Context\TranslatableContext;
 use Behat\Behat\Hook\Scope\AfterStepScope;
 use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Element\Element;
+use Behat\Mink\Exception\Behat\Mink\Exception\UnsupportedDriverActionException;
+use Behat\Mink\Exception\DriverException;
 use Behat\Testwork\Tester\Result\TestResult;
 
 use Drupal\DrupalExtension\FeatureTrait;
@@ -602,7 +604,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
       $suffix = 'png';
       $this->saveScreenshot("${filename}.${suffix}", $filepath);
       echo "Screenshot at: ${output_filepath}.${suffix}";
-    } catch (\Behat\Mink\Exception\UnsupportedDriverActionException|\Behat\Mink\Exception\DriverException $e) {
+    } catch (UnsupportedDriverActionException|DriverException $e) {
       $data = $this->getSession()->getDriver()->getContent();
       $suffix = 'html';
       file_put_contents("${output_filepath}.${suffix}", $data);
