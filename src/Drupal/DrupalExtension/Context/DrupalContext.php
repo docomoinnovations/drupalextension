@@ -131,17 +131,6 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
-   * Log in as the existing user
-   *
-   * @Given I am logged in as user :name
-   */
-  public function iAmLoggedInAsUser($name) {
-    $userid = user_load_by_name($name);
-    $reset_url = user_pass_reset_url($userid) . '/login';
-    $this->getSession()->visit($reset_url);
-  }
-
-  /**
    * @Given I am logged in as a user with the :permissions permission(s)
    */
     public function assertLoggedInWithPermissions($permissions)
@@ -633,6 +622,16 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
   private function getScreenshotParameter(string $name): ?string {
     $parameters = $this->getDrupalParameter('screenshot');
     return !empty($parameters[$name]) ? $parameters[$name] : NULL;
+  }
+
+  /**
+   * Log in as the existing user
+   *
+   * @Given I am logged in as user :name
+   */
+  public function iAmLoggedInAsUser($name): void {
+    $user = user_load_by_name($name);
+    $this->getSession()->visit(user_pass_reset_url($user) . '/login');
   }
 
 }
