@@ -626,4 +626,14 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     return !empty($parameters[$name]) ? $parameters[$name] : NULL;
   }
 
+  /**
+   * Log in as the existing user
+   *
+   * @Given I am logged in as user :name
+   */
+  public function iAmLoggedInAsUser($name): void {
+    $user = user_load_by_name($name);
+    $this->getSession()->visit(user_pass_reset_url($user) . '/login');
+  }
+
 }
