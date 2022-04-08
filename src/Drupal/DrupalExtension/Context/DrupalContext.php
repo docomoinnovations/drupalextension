@@ -635,12 +635,12 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
 
     // Another solution using user_pass_reset_url() is independent from drush,
     // but it works only once.
+    $base_url = $this->getMinkParameter('base_url');
     $user_login= $this->getDriver('drush')->drush('user:login', [
-      "--name '" . $name . "'",
+      "--name=" . $name,
       "--no-browser",
-      "--uri=$this->getMinkParameter('base_url')",
+      "--uri=" . $base_url,
     ]);
-
     $this->getSession()->visit(trim($user_login));
   }
 }
