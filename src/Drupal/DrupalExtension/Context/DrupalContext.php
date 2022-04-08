@@ -632,7 +632,6 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    * @Given I am logged in as user :name
    */
   public function iAmLoggedInAsUser($name) {
-
     // Another solution using user_pass_reset_url() is independent from drush,
     // but it works only once.
     $base_url = $this->getMinkParameter('base_url');
@@ -643,4 +642,5 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     ]);
     $this->getSession()->visit(trim($user_login));
   }
+
 }
