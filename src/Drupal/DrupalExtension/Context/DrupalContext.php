@@ -633,14 +633,14 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
   public function iAmLoggedInAsUser($name) {
 
-    //Another solution using user_pass_reset_url() is independent from drush,
+    // Another solution using user_pass_reset_url() is independent from drush,
     // but it works only once.
-    $uli = $this->getDriver('drush')->drush('user:login', [
+    $user_login= $this->getDriver('drush')->drush('user:login', [
       "--name '" . $name . "'",
       "--no-browser",
       "--uri=$this->getMinkParameter('base_url')",
     ]);
 
-    $this->getSession()->visit(trim($uli));
+    $this->getSession()->visit(trim($user_login));
   }
 }
