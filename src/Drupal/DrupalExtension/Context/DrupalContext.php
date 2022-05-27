@@ -246,7 +246,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    *
    * @Then I should see (the text ):text in all the :rowText rows
    */
-  public function assertTextInTableRows($text, $rowText) {
+  public function assertTextInTableRows($text, $rowText): void {
     $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
     foreach ($rows as $row) {
       if (str_contains($row->getText(), $text) !== false) {
