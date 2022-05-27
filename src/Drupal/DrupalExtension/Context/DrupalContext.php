@@ -184,30 +184,132 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
+   * Retrieve table rows containing specified text from a given element.
+   *
+   * @param Element $element
+   *   \Behat\Mink\Element\Element object.
+   * @param string $search
+   *   The text to search for in the table row.
+   *
+   * @return array of \Behat\Mink\Element\NodeElement
+   *
+   * @throws \RuntimeException
+   */
+  public function getTableRows(Element $element, $search): array {
+    $rows = $element->findAll('css', 'tr');
+    if (empty($rows)) {
+      throw new \RuntimeException(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
+    }
+    $found_rows = [];
+    foreach ($rows as $row) {
+      if (str_contains($row->getText(), $search) !== false) {
+        $found_rows += $row;
+      }
+    }
+    if (count($found_rows) === 0) {
+      throw new \RuntimeException(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
+    }
+    return $found_rows;
+  }
+
+  /**
+   * See if the element has a table.
+   *
+   * @param Element $element
+   *    \Behat\Mink\Element\Element object.
+   *
+   * @return bool
+   *   True if the element has a table.
+   */
+  private function hasTable(Element $element): bool {
+    $rows = $element->findAll('css', 'tr');
+    return empty($rows);
+  }
+
+  /**
    * Find text in a table row containing given text.
    *
    * @Then I should see (the text ):text in the :rowText row
    */
-    public function assertTextInTableRow($text, $rowText)
-    {
-        $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
-        if (strpos($row->getText(), $text) === false) {
-            throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+    public function assertTextInTableRow($text, $rowText) {
+      $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+      foreach ($rows as $row) {
+        if (str_contains($row->getText(), $text) !== false) {
+          return;
+        }
+      }
+      throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+    }
+
+  /**
+   * Find text in all table rows containing given text.
+   *
+   * @Then I should see (the text ):text in all the :rowText rows
+   */
+  public function assertTextInTableRows($text, $rowText) {
+    $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+    foreach ($rows as $row) {
+      if (str_contains($row->getText(), $text) !== false) {
+        throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+      }
+    }
+  }
+
+  /**
+   * Assert text not in a table row containing given text.
+   * If multiple rows are found, check the first one only.
+   *
+   * @Then I should not see (the text ):text in the :rowText row
+   */
+  public function assertTextNotInTableRow($text, $rowText)
+  {
+    $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
+    if (strpos($row->getText(), $text) !== false) {
+      throw new \Exception(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
+    }
+  }
+
+  /**
+   * Asset text not in any table rows containing given text.
+   *
+   * @Then I should not see (the text ):text in any :rowText rows
+   */
+    public function assertTextNotInAnyTableRows($text, $rowText): void {
+        $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+        foreach ($rows as $row) {
+          if (strpos($row->getText(), $text) !== false) {
+            throw new \RuntimeException(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
+          }
         }
     }
 
   /**
-   * Asset text not in a table row containing given text.
+   * Assert text not in any table rows containing given text, or no table.
    *
-   * @Then I should not see (the text ):text in the :rowText row
+   * @Then I should not see (the text ):text in any :rowText rows or no table
    */
-    public function assertTextNotInTableRow($text, $rowText)
-    {
-        $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
-        if (strpos($row->getText(), $text) !== false) {
-            throw new \Exception(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
-        }
+  public function assertTextNotInTableRowOrNoTable($text, $rowText): void {
+    if ($this->hasTable($this->getSession()->getPage())) {
+      $this->assertTextNotInAnyTableRows($text, $rowText);
     }
+  }
+
+  /**
+   * Find text in a table row containing given text, no text in a table row, or
+   * no table. This is used for the transient status.
+   *
+   * @Then I should see with (the text ):text in the :rowText row, no rows, or no table
+   */
+  public function assertNoTableRowOrSeeWithText($text, $rowText): void {
+    if ($this->hasTable($this->getSession()->getPage())) {
+      $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+      foreach ($rows as $row) {
+        if (strpos($row->getText(), $text) === false) {
+          throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+        }
+      }
+    }
+  }
 
   /**
    * Attempts to find a link in a table row containing giving text. This is for
