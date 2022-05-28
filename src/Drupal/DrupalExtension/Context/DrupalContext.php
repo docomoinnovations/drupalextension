@@ -203,7 +203,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     $found_rows = [];
     foreach ($rows as $row) {
       if (str_contains($row->getText(), $search) !== false) {
-        $found_rows += $row;
+        array_push($found_rows, $row);
       }
     }
     if (count($found_rows) === 0) {
