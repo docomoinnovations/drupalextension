@@ -250,7 +250,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
     foreach ($rows ?: [] as $row) {
       if (strpos($row->getText(), $text) !== FALSE) {
-        throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+        throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
       }
     }
   }

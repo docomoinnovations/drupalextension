@@ -542,13 +542,13 @@ JS;
    *   If region or text within it cannot be found.
    */
   public function assertNotRegionTextOrNoSuchRegion($text, $region): void {
-    $regionObj = $this->getSession()->getPage()->find('region', $region);
-    if (empty($regionObj)) {
+    $region_obj = $this->getSession()->getPage()->find('region', $region);
+    if (empty($region_obj)) {
       return;
     }
     //Not find the text within the region.
-    $regionText = $regionObj->getText();
-    if (strpos($regionText, $text) === FALSE) {
+    $region_text = $region_obj->getText();
+    if (strpos($region_text, $text) === FALSE) {
       return;
     }
     throw new \RuntimeException(sprintf('The text "%s" was found in the region "%s" on the page %s', $text, $region, $this->getSession()->getCurrentUrl()));
