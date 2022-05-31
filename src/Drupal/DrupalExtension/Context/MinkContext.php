@@ -543,11 +543,9 @@ JS;
    */
   public function assertNotRegionTextOrNoSuchRegion($text, $region): void {
     $region_obj = $this->getSession()->getPage()->find('region', $region);
-    if (empty($region_obj)) {
-      return;
-    }
+
     //Not find the text within the region.
-    $region_text = $region_obj->getText();
+    $region_text = empty($region_obj) ? '' : $region_obj->getText();
     if (strpos($region_text, $text) === FALSE) {
       return;
     }
