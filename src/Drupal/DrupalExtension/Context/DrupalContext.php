@@ -201,8 +201,8 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
       throw new \RuntimeException(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
     }
     $found_rows = [];
-    foreach ($rows as $row) {
-      if (str_contains($row->getText(), $search) !== false) {
+    foreach ($rows ?: [] as $row) {
+      if (strpos($row->getText(), $search) !== FALSE) {
         array_push($found_rows, $row);
       }
     }
@@ -223,7 +223,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
   private function hasTable(Element $element): bool {
     $rows = $element->findAll('css', 'tr');
-    return empty($rows);
+    return !empty($rows);
   }
 
   /**
@@ -233,12 +233,12 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
     public function assertTextInTableRow($text, $rowText) {
       $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
-      foreach ($rows as $row) {
-        if (str_contains($row->getText(), $text) !== false) {
+      foreach ($rows ?: [] as $row) {
+        if (strpos($row->getText(), $text) !== FALSE) {
           return;
         }
       }
-      throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+      throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
     }
 
   /**
@@ -248,8 +248,8 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
   public function assertTextInTableRows($text, $rowText): void {
     $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
-    foreach ($rows as $row) {
-      if (str_contains($row->getText(), $text) !== false) {
+    foreach ($rows ?: [] as $row) {
+      if (strpos($row->getText(), $text) !== FALSE) {
         throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
       }
     }
@@ -261,8 +261,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    *
    * @Then I should not see (the text ):text in the :rowText row
    */
-  public function assertTextNotInTableRow($text, $rowText)
-  {
+  public function assertTextNotInTableRow($text, $rowText): void {
     $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
     if (strpos($row->getText(), $text) !== false) {
       throw new \Exception(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
@@ -276,8 +275,8 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
     public function assertTextNotInAnyTableRows($text, $rowText): void {
         $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
-        foreach ($rows as $row) {
-          if (strpos($row->getText(), $text) !== false) {
+        foreach ($rows ?: [] as $row) {
+          if (strpos($row->getText(), $text) !== FALSE) {
             throw new \RuntimeException(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
           }
         }
@@ -301,12 +300,14 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    * @Then I should see with (the text ):text in the :rowText row, no rows, or no table
    */
   public function assertNoTableRowOrSeeWithText($text, $rowText): void {
-    if ($this->hasTable($this->getSession()->getPage())) {
-      $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
-      foreach ($rows as $row) {
-        if (strpos($row->getText(), $text) === false) {
-          throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
-        }
+    if (!$this->hasTable($this->getSession()->getPage())) {
+      return;
+    }
+
+    $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+    foreach ($rows ?: [] as $row) {
+      if (strpos($row->getText(), $text) === FALSE) {
+        throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
       }
     }
   }
