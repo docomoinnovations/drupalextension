@@ -200,13 +200,11 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     if (empty($rows)) {
       throw new \RuntimeException(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
     }
-
     $rows = array_filter($rows, static function ($row) use ($search) {
       if (strpos($row->getText(), $search) !== FALSE) {
         return $row;
       }
     });
-
     if (empty($rows)) {
       throw new \RuntimeException(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
     }
