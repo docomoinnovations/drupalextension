@@ -200,16 +200,17 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     if (empty($rows)) {
       throw new \RuntimeException(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
     }
-    $found_rows = [];
-    foreach ($rows ?: [] as $row) {
+
+    $rows = array_filter($rows, static function ($row) use ($search) {
       if (strpos($row->getText(), $search) !== FALSE) {
-        array_push($found_rows, $row);
+        return $row;
       }
-    }
-    if (count($found_rows) === 0) {
+    });
+
+    if (empty($rows)) {
       throw new \RuntimeException(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
     }
-    return $found_rows;
+    return $rows;
   }
 
   /**
@@ -231,7 +232,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    *
    * @Then I should see (the text ):text in the :rowText row
    */
-    public function assertTextInTableRow($text, $rowText) {
+    public function assertTextInTableRow($text, $rowText): void {
       $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
       foreach ($rows ?: [] as $row) {
         if (strpos($row->getText(), $text) !== FALSE) {
