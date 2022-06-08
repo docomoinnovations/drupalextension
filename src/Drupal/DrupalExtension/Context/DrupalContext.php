@@ -262,7 +262,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
   public function assertTextNotInTableRow($text, $rowText): void {
     $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
-    if (strpos($row->getText(), $text) !== false) {
+    if (strpos($row->getText(), $text) !== FALSE) {
       throw new \Exception(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
     }
   }
