@@ -184,6 +184,30 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
+   * See if the table rows contains specified text from a given element.
+   *
+   * @param Element $element
+   *   \Behat\Mink\Element\Element object.
+   * @param string $search
+   *   The text to search for in the table row.
+   *
+   * @return bool
+   *
+   */
+  public function hasTableRows(Element $element, string $search): bool {
+    $rows = $element->findAll('css', 'tr');
+    if (empty($rows)) {
+      return FALSE;
+    }
+    array_filter($rows, static function ($row) use ($search) {
+      if (strpos($row->getText(), $search) !== FALSE) {
+        return TRUE;
+      }
+    });
+    return FALSE;
+  }
+
+  /**
    * Retrieve table rows containing specified text from a given element.
    *
    * @param Element $element
@@ -246,11 +270,8 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    * @Then I should see (the text ):text in all the :rowText rows
    */
   public function assertTextInTableRows($text, $rowText): void {
-    $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
-    foreach ($rows ?: [] as $row) {
-      if (strpos($row->getText(), $text) !== FALSE) {
+    if (!$this->hasTableRows($this->getSession()->getPage(), $rowText)) {
         throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
-      }
     }
   }
 
@@ -268,17 +289,20 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
   }
 
   /**
-   * Asset text not in any table rows containing given text.
+   * Assert text not in any table rows containing given text.
    *
    * @Then I should not see (the text ):text in any :rowText rows
    */
     public function assertTextNotInAnyTableRows($text, $rowText): void {
-        $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
-        foreach ($rows ?: [] as $row) {
-          if (strpos($row->getText(), $text) !== FALSE) {
-            throw new \RuntimeException(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
-          }
+      if (!$this->hasTableRows($this->getSession()->getPage(), $rowText)) {
+        return;
+      }
+      $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+      foreach ($rows ?: [] as $row) {
+        if (strpos($row->getText(), $text) !== FALSE) {
+          throw new \RuntimeException(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
         }
+      }
     }
 
   /**
@@ -299,10 +323,10 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    * @Then I should see with (the text ):text in the :rowText row, no rows, or no table
    */
   public function assertNoTableRowOrSeeWithText($text, $rowText): void {
-    if (!$this->hasTable($this->getSession()->getPage())) {
+    $page = $this->getSession()->getPage();
+    if (!$this->hasTable($page) || !$this->hasTableRows($page, $rowText)) {
       return;
     }
-
     $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
     foreach ($rows ?: [] as $row) {
       if (strpos($row->getText(), $text) === FALSE) {
