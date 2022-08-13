@@ -184,30 +184,132 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
+   * Retrieve table rows containing specified text from a given element.
+   *
+   * @param Element $element
+   *   \Behat\Mink\Element\Element object.
+   * @param string $search
+   *   The text to search for in the table row.
+   *
+   * @return array of \Behat\Mink\Element\NodeElement
+   *
+   * @throws \RuntimeException
+   */
+  public function getTableRows(Element $element, $search): array {
+    $rows = $element->findAll('css', 'tr');
+    if (empty($rows)) {
+      throw new \RuntimeException(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
+    }
+    $rows = array_filter($rows, static function ($row) use ($search) {
+      if (strpos($row->getText(), $search) !== FALSE) {
+        return $row;
+      }
+    });
+    if (empty($rows)) {
+      throw new \RuntimeException(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
+    }
+    return $rows;
+  }
+
+  /**
+   * See if the element has a table.
+   *
+   * @param Element $element
+   *    \Behat\Mink\Element\Element object.
+   *
+   * @return bool
+   *   True if the element has a table.
+   */
+  private function hasTable(Element $element): bool {
+    $rows = $element->findAll('css', 'tr');
+    return !empty($rows);
+  }
+
+  /**
    * Find text in a table row containing given text.
    *
    * @Then I should see (the text ):text in the :rowText row
    */
-    public function assertTextInTableRow($text, $rowText)
-    {
-        $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
-        if (strpos($row->getText(), $text) === false) {
-            throw new \Exception(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+    public function assertTextInTableRow($text, $rowText): void {
+      $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+      foreach ($rows ?: [] as $row) {
+        if (strpos($row->getText(), $text) !== FALSE) {
+          return;
+        }
+      }
+      throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+    }
+
+  /**
+   * Find text in all table rows containing given text.
+   *
+   * @Then I should see (the text ):text in all the :rowText rows
+   */
+  public function assertTextInTableRows($text, $rowText): void {
+    $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+    foreach ($rows ?: [] as $row) {
+      if (strpos($row->getText(), $text) !== FALSE) {
+        throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+      }
+    }
+  }
+
+  /**
+   * Assert text not in a table row containing given text.
+   * If multiple rows are found, check the first one only.
+   *
+   * @Then I should not see (the text ):text in the :rowText row
+   */
+  public function assertTextNotInTableRow($text, $rowText): void {
+    $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
+    if (strpos($row->getText(), $text) !== FALSE) {
+      throw new \Exception(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
+    }
+  }
+
+  /**
+   * Asset text not in any table rows containing given text.
+   *
+   * @Then I should not see (the text ):text in any :rowText rows
+   */
+    public function assertTextNotInAnyTableRows($text, $rowText): void {
+        $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+        foreach ($rows ?: [] as $row) {
+          if (strpos($row->getText(), $text) !== FALSE) {
+            throw new \RuntimeException(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
+          }
         }
     }
 
   /**
-   * Asset text not in a table row containing given text.
+   * Assert text not in any table rows containing given text, or no table.
    *
-   * @Then I should not see (the text ):text in the :rowText row
+   * @Then I should not see (the text ):text in any :rowText rows or no table
    */
-    public function assertTextNotInTableRow($text, $rowText)
-    {
-        $row = $this->getTableRow($this->getSession()->getPage(), $rowText);
-        if (strpos($row->getText(), $text) !== false) {
-            throw new \Exception(sprintf('Found a row containing "%s", but it contained the text "%s".', $rowText, $text));
-        }
+  public function assertTextNotInTableRowOrNoTable($text, $rowText): void {
+    if ($this->hasTable($this->getSession()->getPage())) {
+      $this->assertTextNotInAnyTableRows($text, $rowText);
     }
+  }
+
+  /**
+   * Find text in a table row containing given text, no text in a table row, or
+   * no table. This is used for the transient status.
+   *
+   * @Then I should see with (the text ):text in the :rowText row, no rows, or no table
+   */
+  public function assertNoTableRowOrSeeWithText($text, $rowText): void {
+    if (!$this->hasTable($this->getSession()->getPage())) {
+      return;
+    }
+
+    $rows = $this->getTableRows($this->getSession()->getPage(), $rowText);
+    foreach ($rows ?: [] as $row) {
+      if (strpos($row->getText(), $text) === FALSE) {
+        throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+      }
+    }
+  }
 
   /**
    * Attempts to find a link in a table row containing giving text. This is for
@@ -631,9 +733,16 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    *
    * @Given I am logged in as user :name
    */
-  public function iAmLoggedInAsUser($name): void {
-    $user = user_load_by_name($name);
-    $this->getSession()->visit(user_pass_reset_url($user) . '/login');
+  public function iAmLoggedInAsUser($name) {
+    // Another solution using user_pass_reset_url() is independent from drush,
+    // but it works only once.
+    $base_url = $this->getMinkParameter('base_url');
+    $user_login= $this->getDriver('drush')->drush('user:login', [
+      "--name=" . $name,
+      "--no-browser",
+      "--uri=" . $base_url,
+    ]);
+    $this->getSession()->visit(trim($user_login));
   }
 
 }

@@ -405,20 +405,19 @@ class MessageContext extends RawDrupalContext implements TranslatableContext
    */
   private function assertNotVisible(string $selector_id): void {
     $selector = $this->getDrupalSelector($selector_id);
-    $exception_msg = "The page '%s' contains the $selector_id '%s': %s";
+    $exception_msg = "The page '%s' contains $selector_id: %s";
     $selector_objects = $this->getSession()->getPage()->findAll("css", $selector);
     if (empty($selector_objects)) {
       return;
     }
 
-    $visible_messages = [];
     foreach ($selector_objects as $selector_object) {
       if (empty($selector_objects)) {
         continue;
       }
-      $visible_messages += $selector_object->getText();
+      $visible_messages = $selector_object->getText();
+      throw new ExpectationException(sprintf($exception_msg, $this->getSession()->getCurrentUrl(), $visible_messages), $this->getSession()->getDriver());
     }
-    throw new ExpectationException(sprintf($exception_msg, $this->getSession()->getCurrentUrl(), $selector_id, $visible_messages), $this->getSession()->getDriver());
   }
 
 }
