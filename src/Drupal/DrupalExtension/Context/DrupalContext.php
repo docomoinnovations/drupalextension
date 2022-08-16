@@ -271,7 +271,7 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
    */
   public function assertTextInTableRows($text, $rowText): void {
     if (!$this->hasTableRows($this->getSession()->getPage(), $rowText)) {
-        throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
+      throw new \RuntimeException(sprintf('Found a row containing "%s", but it did not contain the text "%s".', $rowText, $text));
     }
   }
 
