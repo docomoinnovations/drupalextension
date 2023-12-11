@@ -155,31 +155,6 @@ class DrupalContext extends RawDrupalContext implements TranslatableContext
     }
 
   /**
-   * Retrieve a table row containing specified text from a given element.
-   *
-   * @param \Behat\Mink\Element\Element
-   * @param string
-   *   The text to search for in the table row.
-   *
-   * @return \Behat\Mink\Element\NodeElement
-   *
-   * @throws \Exception
-   */
-    public function getTableRow(Element $element, $search)
-    {
-        $rows = $element->findAll('css', 'tr');
-        if (empty($rows)) {
-            throw new \Exception(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
-        }
-        foreach ($rows as $row) {
-            if (strpos($row->getText(), $search) !== false) {
-                return $row;
-            }
-        }
-        throw new \Exception(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
-    }
-
-  /**
    * Find text in a table row containing given text.
    *
    * @Then I should see (the text ):text in the :rowText row
