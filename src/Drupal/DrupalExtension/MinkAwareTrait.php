@@ -3,6 +3,7 @@
 namespace Drupal\DrupalExtension;
 
 use Behat\Mink\Mink;
+use Behat\Mink\Element\Element;
 
 /**
  * Provides helpful methods to interact with the Mink session.
@@ -170,24 +171,114 @@ trait MinkAwareTrait
         file_put_contents($filepath . '/' . $filename, $this->getSession()->getScreenshot());
     }
 
-  /**
-   * Return a region from the current page.
-   *
-   * @param string $region
-   *   The machine name of the region to return.
-   *
-   * @return \Behat\Mink\Element\NodeElement
-   *
-   * @throws \Exception
-   *   If the region cannot be found.
-   */
-  public function getRegion($region): \Behat\Mink\Element\NodeElement {
-    $session = $this->getSession();
-    $regionObj = $session->getPage()->find('region', $region);
-    if (!$regionObj) {
-      throw new \Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
+    /**
+     * Return a region from the current page.
+     *
+     * @param string $region
+     *   The machine name of the region to return.
+     *
+     * @return \Behat\Mink\Element\NodeElement
+     *
+     * @throws \Exception
+     *   If the region cannot be found.
+     */
+    public function getRegion($region): \Behat\Mink\Element\NodeElement {
+        $session = $this->getSession();
+        $regionObj = $session->getPage()->find('region', $region);
+        if (!$regionObj) {
+            throw new \Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
+        }
+        return $regionObj;
     }
-    return $regionObj;
-  }
+
+    /**
+     * See if the table rows contains specified text from a given element.
+     *
+     * @param Element $element
+     *   \Behat\Mink\Element\Element object.
+     * @param string $search
+     *   The text to search for in the table row.
+     *
+     * @return bool
+     *
+     */
+    public function hasTableRows(Element $element, string $search): bool {
+        $rows = $element->findAll('css', 'tr');
+        if (empty($rows)) {
+            return FALSE;
+        }
+        array_filter($rows, static function ($row) use ($search) {
+            if (strpos($row->getText(), $search) !== FALSE) {
+                return TRUE;
+            }
+        });
+        return FALSE;
+    }
+
+    /**
+     * Retrieve table rows containing specified text from a given element.
+     *
+     * @param Element $element
+     *   \Behat\Mink\Element\Element object.
+     * @param string $search
+     *   The text to search for in the table row.
+     *
+     * @return array of \Behat\Mink\Element\NodeElement
+     *
+     * @throws \RuntimeException
+     */
+    public function getTableRows(Element $element, string $search): array {
+        $rows = $element->findAll('css', 'tr');
+        if (empty($rows)) {
+            throw new \RuntimeException(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
+        }
+        $rows = array_filter($rows, static function ($row) use ($search) {
+            if (strpos($row->getText(), $search) !== FALSE) {
+                return $row;
+            }
+        });
+        if (empty($rows)) {
+            throw new \RuntimeException(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
+        }
+        return $rows;
+    }
+
+    /**
+     * Retrieve a table row containing specified text from a given element.
+     *
+     * @param \Behat\Mink\Element\Element
+     * @param string
+     *   The text to search for in the table row.
+     *
+     * @return \Behat\Mink\Element\NodeElement
+     *
+     * @throws \Exception
+     */
+    public function getTableRow(Element $element, string $search): \Behat\Mink\Element\NodeElement {
+        $rows = $element->findAll('css', 'tr');
+        if (empty($rows)) {
+            throw new \Exception(sprintf('No rows found on the page %s', $this->getSession()->getCurrentUrl()));
+        }
+        foreach ($rows as $row) {
+            if (strpos($row->getText(), $search) !== false) {
+                return $row;
+            }
+        }
+        throw new \Exception(sprintf('Failed to find a row containing "%s" on the page %s', $search, $this->getSession()->getCurrentUrl()));
+    }
+
+    /**
+     * See if the element has a table.
+     *
+     * @param Element $element
+     *    \Behat\Mink\Element\Element object.
+     *
+     * @return bool
+     *   True if the element has a table.
+     */
+    private function hasTable(Element $element): bool {
+        $rows = $element->findAll('css', 'tr');
+        return !empty($rows);
+    }
 
 }
