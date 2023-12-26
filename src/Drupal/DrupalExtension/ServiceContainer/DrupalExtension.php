@@ -224,7 +224,13 @@ class DrupalExtension implements ExtensionInterface
                   defaultValue('/tmp/screenshots')->
                 end()->
                 scalarNode('failure_suffix')->
-                  defaultValue('F')->
+                  defaultValue('-FAIL')->
+                end()->
+                scalarNode('width')->
+                  defaultValue('1440')->
+                end()->
+                scalarNode('height')->
+                  defaultValue('932')->
                 end()->
               end()->
             end()->
