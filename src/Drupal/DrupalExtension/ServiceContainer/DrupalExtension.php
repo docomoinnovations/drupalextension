@@ -227,10 +227,8 @@ class DrupalExtension implements ExtensionInterface
                   defaultValue('-FAIL')->
                 end()->
                 scalarNode('width')->
-                  defaultValue('1440')->
                 end()->
                 scalarNode('height')->
-                  defaultValue('932')->
                 end()->
               end()->
             end()->
